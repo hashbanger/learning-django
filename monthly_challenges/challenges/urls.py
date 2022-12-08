@@ -4,4 +4,8 @@ from django.urls import path
 # importing the view file from the same folder as the current urls file exist
 from . import views
 
-urlpatterns = [path("<month>", views.monthly_challenge)]
+urlpatterns = [
+    # the order matters
+    path("<int:month>", views.monthly_challenge_by_number),
+    path("<str:month>", views.monthly_challenge),
+]
