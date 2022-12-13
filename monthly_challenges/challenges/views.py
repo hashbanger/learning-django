@@ -41,6 +41,7 @@ def monthly_challenge_by_number(request, month):
     return HttpResponseRedirect(redirect_path)
 
 
+
 def monthly_challenge(request, month):
     try:
         challenge_text = monthly_challenges[month]
