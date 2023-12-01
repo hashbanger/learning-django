@@ -17,7 +17,7 @@
 
   - So we have to add app configuration to our project `settings.py` module.
   - The app configuration is location in the application's `apps.py` module.
-  - `<AppName>Config` from `apps.py` is added to `settings.py` file in project under `INSTALLED_APPS` list.
+  - `<appname>Config` from `apps.py` is added to `settings.py` file in project under `INSTALLED_APPS` list.
 
 - We can pass context as third argument in render templates. That can pass information variables to template html.
   - Then we can access that variable in the page using jinja template.
@@ -26,9 +26,41 @@
   - Then we remove the common code in the child pages and using `{% extends <path to base.html> %}` and overwrite base block using `{% block <content_name> %}`
   - Templating is useful as we can add something like bootstrap to just base and every child page would inherit it.
   - Also to use css we need to create static directory similar to template structure that contains all the css code. Then we can use `{% load static %}` at the top of base html page to load the css.
-  - Then we can use the css using `<link rel="stylesheet", type="text/css" href="{% static '<app_name>/main.css%}">`, static here creates an absolute path.
+  - Then we can use the css using `<link rel="stylesheet", type="text/css" href="{% static '<appname>/main.css%}">`, static here creates an absolute path.
 - For urls to pages, rather than hardcoding the hrefs it's better to use `{% url 'name-of-view' %}` as it change and we don't have to change it everywhere.
 
 - First we have to create a database using migrate
+
   - `python manage.py makemigrations`
   - `python manage.py createsuperuser`
+  - Login to the admin page using `localhost:8000/admin/login`
+
+- In Django, ORM stands for Object-Relational Mapping. It is a technique that allows you to interact with your database using Python objects instead of raw SQL queries. The ORM in Django provides a high-level, Pythonic way to interact with databases, making it more abstract and easier for developers to work with databases in their web applications.
+- In `models.py` we can add our models, each individual classwould be a separate table.
+- When we create models we need to update the database using the migrations. We can checkout the SQL that it will run on migration using this command `python manage.py sqlmigrate <appname> <0001 (whatever number)>`
+- To migrate we can run `python manage.py migrate`.
+
+- We can interact with the ORM using the shell.
+
+  - To open the shell using `python manage.py shell`.
+  - Then import the models and User
+    ```
+    from <appname>.models import <modelName>
+    from django.contrib.auth.models import User
+    ```
+  - Then we can list all objects using `User.objects.all()`, `User.objects.first()`, `User.objects.last()`, `User.objects.filter(<condition>)`, `User.objects.get(id=<user_id>), `etc.
+  - We can assign them to variables which make them easier to use like, `User.objects.filter(username="username").first()`.
+  - List user id using `user.id` or `user.pk`.
+  - We can also query other models like `<modelName>.objects.all()`
+  - We can also create new entries, like if we have blog post as new model then we can create new entry using:
+    - `post_1 = Post(title="blog 1", content="first post content", "author"=user)`
+    - `post_1.save()`
+
+- We can also check the model set using the attribute like this:
+
+  - `user = User.objects.get(id=1)`
+  - `user.post_set`
+  - We can also create new post without having to explicitly use `.save` function.
+    - `user.post_set.create(title="blog 3", content = "third post content")`
+
+- To see the created models into the admin page with Groups and Users then we should add it to admin page under <appname>/admin.py using `admin.site.register(modelName)`
