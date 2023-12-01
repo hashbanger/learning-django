@@ -1,0 +1,13 @@
+- To get a list of all the useful commands, use `django-admin`
+- We created a new application using `django-admin startproject <project-name>`
+- To create a new application in the project directory use `python3 manage.py startapp <app-name>`
+- A single project can have multiple apps with its own components that are similar to the base project.
+
+- The `manage.py` file that is present at the base level allows us to run command line commands.
+- In the `view.py` we write the logic of what we want to do when the user goes to a certain page.
+  - We have to map a url to the view function with the logic defined.
+  - For that we need to create a `urls.py` file in the app directory, it would be similar to project level url file.
+  - We need to import the view from the views to the url file and define that in the urls pattern ,we use name argument of paths like "appname-page" so different apps can have same routes but not collide.
+  - Once we have that mapped we still need to tell the project urls which urls to direct to our app urls using the snippet, `path('appname/', include('appname.urls'))`
+- It's a good idea to leave the trailing slashes in the urlpatterns of the main app so that with and without both work for a user.
+- If we want to make one of the applications as the home for our project then we can change the name from something like `app/` to empty string `""` and it becomes the default home.
