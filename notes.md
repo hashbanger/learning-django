@@ -83,3 +83,7 @@
     ```
 
 - To add more details to the user form we can add something like a new email field, for that we have to create a new form which inherits from the user form.
+
+$ pip install django-crispy-forms
+
+$ pip install crispy-bootstrap5
