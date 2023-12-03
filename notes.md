@@ -63,4 +63,23 @@
   - We can also create new post without having to explicitly use `.save` function.
     - `user.post_set.create(title="blog 3", content = "third post content")`
 
-- To see the created models into the admin page with Groups and Users then we should add it to admin page under <appname>/admin.py using `admin.site.register(modelName)`
+- To see the created models into the admin page with Groups and Users then we should add it to admin page under <appname>/admin.py using `admin.site.register(modelName)`.
+
+- To not have to reinvent the wheel we can use UserCreationForm() from django.contrib.auth.forms for user form views.
+- In forms we create conditions so that if the data is being sent then we can do something with that, otherwise we just open the user register form.
+
+  - We have also used the redirect function from django.shortcuts and put the url name to redirect to a given page. Also we have used `form.save` to save the user easily that we can check from the admin page.
+    ```
+    if request.method == "POST":
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            username = form.cleaned_data.get("username")
+            messages.success(request, f"Account created for {username}!")
+            return redirect("blog-home")
+    else:
+        form = UserCreationForm()
+    return render(request, "users/register.html", {"form": form})
+    ```
+
+- To add more details to the user form we can add something like a new email field, for that we have to create a new form which inherits from the user form.
