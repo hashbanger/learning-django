@@ -103,6 +103,88 @@
   {% endif %}
   ```
 - In the same conditional alongside the logout we can also display link to profile page, we created another view in users application. But the problem is that we can logout but still can navigate to profile page manually although it might be shown blank but navigation to it shouldn't be possible on logout.
+
   - We can use the `@login` decorator that django already provides.
   - Adding this decorator make django look for the user login page at `/accounts/login/?next=/profile/` but as done previously we can change this in main settings `LOGIN_URL = "login"`.
   - On the login page then it keeps track that next after login it has to go to the profile page by itself `http://localhost:8000/login/?next=/profile/`
+
+- For user profile functionality we need to extend the user model in django in the `users/models.py`. There needs to be one-to-one funtionality.
+
+  - We have to create a model similar to how we create a post.
+
+  ```
+  from django.contrib.auth.models import User
+
+  class Profile(models.Model):
+      user = models.OneToOneField(User, on_delete=models.CASCADE)
+      image = models.ImageField(default='default.png', upload_to='profile_pics')
+
+      def __str__(self):
+          return f"{self.user.username} Profile"
+  ```
+
+  - Then we have to makemigrations and migrate to make changes to the database.
+  - We also need to register it in the app's `admin.py`, this is done so that it is accessble to the admin portal.
+
+    ```
+    from .models import Profile
+
+    admin.site.register(Profile)
+    ```
+
+- We can access the shell here as well using `python3 manage.py shell` and we can access the multiple attributes attached to each user.
+
+  ```
+  from django.contrib.auth.models import User
+  user = User.objects.filter(username="prashantbrahmbhatt")
+  ```
+
+  - `user.profile`
+  - `user.profile.image`
+  - `user.profile.image.width`
+  - `user.profile.image.height`
+  - `user.profile.image.size`
+
+- In order to manage the paths and directories of the profile pictures stored we have to change the project settings in the project `settings.py` file.
+
+  ```
+  MEDIA_ROOT = os.path.join(BASE_DIR, "media") # Base is already defined, <dirname> we can add as per our naming.
+
+  MEDIA_URL = "/media/" # <dirname>
+  ```
+
+- For non-deployment strategy we have to define in the projects `urls.py` this:
+  ```
+  if settings.DEBUG:
+      urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+  ```
+- We are going to create a `signals.py` in our users app. This would be used so that when a new user is created there is automatically a profile created for the user.
+
+  - When a user is saved then send this signal, the signal is received by this receiver.
+
+  ```
+  from django.db.models.signals import post_save
+  from django.dispatch import receiver
+  from .models import Profile
+
+  @receiver(post_save, sender=User)
+  def create_profile(sender, instance, created, **kwargs):
+      if created:
+          Profile.objects.create(user=instance)
+
+
+  @receiver(post_save, sender=User)
+  def save_profile(sender, instance, **kwargs):
+      instance.profile.save()
+  ```
+
+  - We also have to register this under User config in `apps.py`.
+
+  ```
+  class UsersConfig(AppConfig):
+  default_auto_field = "django.db.models.BigAutoField"
+  name = "users"
+
+  def ready(self):
+      import users.signals
+  ```
