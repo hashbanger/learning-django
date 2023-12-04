@@ -316,16 +316,16 @@
 
 - Similar to other views we can also create a delete view with proper template.
 
-  - The success_url is there to make sure there is a path to redirect to after deletion
+  - The `success_url` is there to make sure there is a path to redirect to after deletion
 
     ```
     class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
-    model = Post
+        model = Post
 
-    success_url = "/"
-    def test_func(self):
-        post = self.get_object()
-        if self.request.user == post.author:
-            return True
-        return False
+        success_url = "/"
+        def test_func(self):
+            post = self.get_object()
+            if self.request.user == post.author:
+                return True
+            return False
     ```
