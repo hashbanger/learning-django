@@ -266,3 +266,66 @@
           img.thumbnail(output_size)
           img.save()
   ```
+
+- We can replace our function home view to a new view that inherits the built in view called `ListView`.
+
+  ```
+    from django.views.generic import ListView
+    class PostListView(ListView):
+        model = Post
+        template_name = "blog/home.html" # this needs to be there otherwise it looks for a default template at default path. <app>/<model>_<viewtype>.html
+        context_object_name = "posts"
+        ordering = ["-date_posted"] # this will change the ordering of the content as per the date
+  ```
+
+  - But we would also have to update our app url from `path("", views.home, name="blog-home"),` to `path("", PostListView.as_view(), name="blog-home"),`.
+
+- Now we need to create detailed view so that we can open individual content. For that we would use the `DetailView` in the `views.py`.
+
+  ```
+  class PostDetailView(DetailView):
+  model = Post
+  ```
+
+  - We accordingly need to create the app url for that which can dynamically fetch different content.
+    `path("post/<int:pk>/", PostDetailView.as_view(), name="post-detail")`
+  - And in our template we need to use `object.<attribute>` to refer to model instance attributes, so it will be like `object.title`, `object.content`, etc.
+
+- We have to make a create blog view that allows the user to create a new content post. For that we would use the inbuilt `CreateView` provided by django.
+
+  - We have created the `form_valid` function that overrides the default, we have used this so that an author is attached to the post before it gets saved and no author error is resolved. We also have to update our model to include this function:
+    ```
+    def get_absolute_url(self):
+        return reverse("post-detail", kwargs={"pk": self.pk})
+    ```
+  - `LoginRequiredMixin` makes it redirect to log in page if the user is not logged in.
+
+    ```
+    from django.contrib.auth.mixins import LoginRequiredMixin
+
+    class PostCreateView(LoginRequiredMixin, CreateView):
+        model = Post
+        fields = ["title", "content"]
+
+        def form_valid(self, form):
+            form.instance.author = self.request.user
+            return super().form_valid(form)
+    ```
+
+    - For any updation deletion of objects we need to pass in `object.id` in our templates url so that it knows which object to perform operations on. Like this `{% url 'post-update' object.id %}`
+
+- Similar to other views we can also create a delete view with proper template.
+
+  - The success_url is there to make sure there is a path to redirect to after deletion
+
+    ```
+    class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+    model = Post
+
+    success_url = "/"
+    def test_func(self):
+        post = self.get_object()
+        if self.request.user == post.author:
+            return True
+        return False
+    ```
