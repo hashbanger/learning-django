@@ -84,6 +84,25 @@
 
 - To add more details to the user form we can add something like a new email field, for that we have to create a new form which inherits from the user form.
 
-$ pip install django-crispy-forms
-
-$ pip install crispy-bootstrap5
+- For login we can use the default views that django provides builtin from the auth module importing `from django.contrib.auth import views as auth_views` then we can use it as `path("login/", auth_views.LoginView.as_view(), name="login")` similar for logout as well.
+- For the login page template it looks for it in the `registration/login.html` path so we have to create it there, but we can make change in the url pattern to make it look elsewhere where we want it to.
+- We would need to add `accounts/profile` as the user when logged in needs to be directed to this url. But we added a main setting `LOGIN_REDIRECT_URL = "blog-home"` to make it redirect to home page.
+- When we have all the login logout register pages ready then we can use conditionals to change the links in the navigation bar or anywhere else to show login and register when user is logged out else show logout.
+  ```
+  {% if user.is_authenticated %}
+      <li class="nav-item">
+          <a class="nav-link active" aria-current="page" href="{% url 'logout'%}">Logout</a>
+      </li>
+  {% else %}
+      <li class="nav-item">
+          <a class="nav-link active" aria-current="page" href="{% url 'login'%}">Login</a>
+      </li>
+      <li class="nav-item">
+          <a class="nav-link active" aria-current="page" href="{% url 'register'%}">Register</a>
+      </li>
+  {% endif %}
+  ```
+- In the same conditional alongside the logout we can also display link to profile page, we created another view in users application. But the problem is that we can logout but still can navigate to profile page manually although it might be shown blank but navigation to it shouldn't be possible on logout.
+  - We can use the `@login` decorator that django already provides.
+  - Adding this decorator make django look for the user login page at `/accounts/login/?next=/profile/` but as done previously we can change this in main settings `LOGIN_URL = "login"`.
+  - On the login page then it keeps track that next after login it has to go to the profile page by itself `http://localhost:8000/login/?next=/profile/`
