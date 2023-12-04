@@ -188,3 +188,81 @@
   def ready(self):
       import users.signals
   ```
+
+- For User profile updation we need to add two separate forms for information update and profile picture update.
+
+  ```
+    from .models import Profile
+
+    class UserUpdateForm(forms.ModelForm):
+    email = forms.EmailField()
+
+    class Meta:
+        model = User
+        fields = ["username", "email"]
+
+    class ProfileUpdateForm(forms.ModelForm):
+        class Meta:
+            model = Profile
+            fields = ["image"]
+  ```
+
+  - Then we need to update our views to allow these updates.
+
+  ```
+    @login_required
+    def profile(request):
+        u_form = UserUpdateForm()
+        p_form = ProfileUpdateForm()
+
+        context = {
+            "u_form": u_form,
+            "p_form": p_form
+        }
+
+        return render(request, "users/profile.html", context)
+  ```
+
+  - Then we can simply access the variables `{{ u_form|crispy }}` and `{{ p_form|crispy }}` in our templates.
+  - But it is important that in the template the form element has enctype defined as `<form method="POST", enctype="multipart/form-data"` otherwise the picture may not get saved in the backend.
+
+- We might want to have prefilled the current information in the profile form we want to update. For that we can just update the view to have these instances.
+
+  ```
+  u_form = UserUpdateForm(instance=request.user)
+  p_form = ProfileUpdateForm(instance=request.user.profile)
+  ```
+
+  - For updation if the request is post we need to save it accordingly.
+
+  ```
+  if request.method == "POST":
+      u_form = UserUpdateForm(request.POST, instance=request.user)
+      p_form = ProfileUpdateForm(request.POST, request.FILES, instance=request.user.profile)
+
+        if u_form.is_valid() and p_form.is_valid():
+            u_form.save()
+            p_form.save()
+            messages.success(request, f'Your account has been updated!')
+            return redirect("profile")
+  ```
+
+- For allowing efficient use of large profile images for profile pictures we can override the save method in our profile model which would look now like this:
+
+  ```
+  class Profile(models.Model):
+  user = models.OneToOneField(User, on_delete=models.CASCADE)
+  image = models.ImageField(default="default.png", upload_to="profile_pics")
+
+  def __str__(self):
+      return f"{self.user.username} Profile"
+
+  def save(self):
+      super().save()
+
+      img = Image.open(self.image.path)
+      if (img.height > 300) or (img.width > 300):
+          output_size = (300, 300)
+          img.thumbnail(output_size)
+          img.save()
+  ```
