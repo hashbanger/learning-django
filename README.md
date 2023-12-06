@@ -329,3 +329,100 @@
                 return True
             return False
     ```
+
+- To implement pagination let's see how paginator works and what functions can we leverage:
+
+  ```
+  >>> from django.core.paginator import Paginator
+  >>> posts = ['1', '2', '3', '4', '5']
+  >>> p = Paginator(posts, 3)
+  >>> p.num_pages
+  >>> 2
+  >>> for page in p.page_range:
+  >>> ... print(page)
+  >>> ...
+  >>> 1
+  >>> 2
+  >>> p1 = p.page(1)
+  >>> p1
+  >>> <Page 1 of 2>
+  >>> p1.number
+  >>> 1
+  >>> p1.object_list
+  >>> ['1', '2', '3']
+  >>> p1.has_previous()
+  >>> False
+  >>> p1.has_next()
+  >>> True
+  >>> p1.next_page_number()
+  >>> 2
+  >>>
+  ```
+
+  - For implementation in the app first we go to the`views.py`in the blog and modify the post view by adding`paginate_by`.
+
+  ```
+    class PostListView(ListView):
+    model = Post
+    template_name = "blog/home.html"
+    context_object_name = "posts"
+    ordering = [
+    "-date_posted"
+    ] # this will change the ordering of the content as per the date
+    paginate_by = 5
+
+  ```
+
+  - Then we just modify the template to add the pagination buttons.
+
+  ```
+
+  {% if is_paginated %}
+  {% if page_obj.has_previous %}
+  <a class="btn btn-outline-info mb-4" href="?page=1">First</a>
+  <a class="btn btn-outline-info mb-4" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+  {% endif %}
+  {% for num in page_obj.paginator.page_range %}
+  {% if page_obj.number == num %}
+  <a class="btn btn-info mb-4" href="?page={{ num }}">{{ num }}</a>
+  {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+  <a class="btn btn-outline-info mb-4" href="?page={{ num }}">{{ num }}</a>
+  {% endif %}
+  {% endfor %}
+  {% if page_obj.has_next %}
+  <a class="btn btn-outline-info mb-4" href="?page={{ page_obj.next_page_number }}">Next</a>
+  <a class="btn btn-outline-info mb-4" href="?page={{ page_obj.paginator.num_pages }}">Last</a>
+  {% endif %}
+
+  {% endif %}
+
+  ```
+
+- We can also implement pagination for each user where click on username would only show posts by that user for that we would also create a `ListView` similar to posts one with one function `get_queryset` overridden.
+
+  ```
+  from django.shortcuts import get_object_or_404
+  from django.contrib.auth.models import User
+
+  class UserPostListView(ListView):
+      model = Post
+      template_name = "blog/user_posts.html"
+      context_object_name = "posts"
+      paginate_by = 5
+
+      def get_queryset(self):
+          user = get_object_or_404(User, username=self.kwargs.get("username"))
+          return Post.objects.filter(author=user).order_by("-date_posted")
+  ```
+
+  - Then we create a url for the user posts.
+
+  ```
+      `path("user/<str:username>", UserPostListView.as_view(), name="user-posts"),`
+  ```
+
+  - Finally we add the url with username passed in the template.
+
+  ```
+      <a class="mr-2" href="{% url 'user-posts' post.author.username %}">{{ post.author }}</a>
+  ```
